@@ -1,0 +1,108 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_tetragon_namespace is defined
+      - cilium_tetragon_chart_version is defined
+    quiet: true
+
+- name: Add Cilium Helm repository for Tetragon
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "{{ cilium_tetragon_helm_repo }}"
+  when: cilium_tetragon_state == 'present'
+
+- name: Deploy Tetragon via Helm
+  kubernetes.core.helm:
+    name: "{{ cilium_tetragon_helm_release_name }}"
+    chart_ref: cilium/tetragon
+    chart_version: "{{ cilium_tetragon_chart_version }}"
+    release_namespace: "{{ cilium_tetragon_namespace }}"
+    create_namespace: true
+    kubeconfig: "{{ cilium_tetragon_kubeconfig | default(omit) }}"
+    context: "{{ cilium_tetragon_context | default(omit) }}"
+    wait: "{{ cilium_tetragon_wait }}"
+    wait_timeout: "{{ cilium_tetragon_wait_timeout }}s"
+    state: "{{ cilium_tetragon_state }}"
+  register: cilium_tetragon_helm_result
+
+- name: Wait for Tetragon daemonset to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: tetragon
+    namespace: "{{ cilium_tetragon_namespace }}"
+    kubeconfig: "{{ cilium_tetragon_kubeconfig | default(omit) }}"
+    context: "{{ cilium_tetragon_context | default(omit) }}"
+  register: cilium_tetragon_ds
+  until:
+    - cilium_tetragon_ds.resources | length > 0
+    - cilium_tetragon_ds.resources[0].status.numberReady | default(0) == cilium_tetragon_ds.resources[0].status.desiredNumberScheduled | default(1)
+  retries: "{{ (cilium_tetragon_wait_timeout / 10) | int }}"
+  delay: 10
+  when:
+    - cilium_tetragon_state == 'present'
+    - cilium_tetragon_wait
+
+- name: Apply baseline process tracing policy
+  stevefulme1.cilium.cilium_tracing_policy:
+    kubeconfig: "{{ cilium_tetragon_kubeconfig | default(omit) }}"
+    context: "{{ cilium_tetragon_context | default(omit) }}"
+    name: baseline-process-monitor
+    state: present
+    definition:
+      apiVersion: cilium.io/v1alpha1
+      kind: TracingPolicy
+      metadata:
+        name: baseline-process-monitor
+      spec:
+        kprobes:
+          - call: sys_execve
+            syscall: true
+            args:
+              - index: 0
+                type: string
+            selectors:
+              - matchActions:
+                  - action: Post
+  when:
+    - cilium_tetragon_state == 'present'
+    - cilium_tetragon_baseline_policies_enabled
+
+- name: Apply baseline file access tracing policy
+  stevefulme1.cilium.cilium_tracing_policy:
+    kubeconfig: "{{ cilium_tetragon_kubeconfig | default(omit) }}"
+    context: "{{ cilium_tetragon_context | default(omit) }}"
+    name: baseline-file-monitor
+    state: present
+    definition:
+      apiVersion: cilium.io/v1alpha1
+      kind: TracingPolicy
+      metadata:
+        name: baseline-file-monitor
+      spec:
+        kprobes:
+          - call: sys_openat
+            syscall: true
+            args:
+              - index: 0
+                type: int
+              - index: 1
+                type: string
+            selectors:
+              - matchArgs:
+                  - index: 1
+                    operator: Prefix
+                    values:
+                      - /etc/
+                      - /var/run/secrets/
+                matchActions:
+                  - action: Post
+  when:
+    - cilium_tetragon_state == 'present'
+    - cilium_tetragon_baseline_policies_enabled
+
+- name: Display Tetragon deployment status
+  ansible.builtin.debug:
+    msg: "Tetragon {{ cilium_tetragon_chart_version }} deployed in {{ cilium_tetragon_namespace }}"
+  when: cilium_tetragon_state == 'present'

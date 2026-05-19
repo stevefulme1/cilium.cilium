@@ -1,0 +1,12 @@
+---
+cilium_install_namespace: kube-system
+cilium_install_chart_version: "1.17.0"
+cilium_install_helm_repo: "https://helm.cilium.io/"
+cilium_install_helm_release_name: cilium
+cilium_install_kube_proxy_replacement: true
+cilium_install_hubble_enabled: true
+cilium_install_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_install_context: ""
+cilium_install_wait: true
+cilium_install_wait_timeout: 300
+cilium_install_state: present

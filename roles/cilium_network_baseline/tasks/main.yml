@@ -1,0 +1,108 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_network_baseline_namespace is defined
+    quiet: true
+
+- name: Apply cluster-wide default deny ingress policy
+  stevefulme1.cilium.cilium_clusterwide_network_policy:
+    kubeconfig: "{{ cilium_network_baseline_kubeconfig | default(omit) }}"
+    context: "{{ cilium_network_baseline_context | default(omit) }}"
+    name: baseline-deny-all-ingress
+    state: "{{ cilium_network_baseline_state }}"
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumClusterwideNetworkPolicy
+      metadata:
+        name: baseline-deny-all-ingress
+      spec:
+        endpointSelector: {}
+        ingress:
+          - {}
+        ingressDeny:
+          - fromEntities:
+              - world
+  when: cilium_network_baseline_deny_all_ingress
+
+- name: Apply cluster-wide allow kube-dns policy
+  stevefulme1.cilium.cilium_clusterwide_network_policy:
+    kubeconfig: "{{ cilium_network_baseline_kubeconfig | default(omit) }}"
+    context: "{{ cilium_network_baseline_context | default(omit) }}"
+    name: baseline-allow-kube-dns
+    state: "{{ cilium_network_baseline_state }}"
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumClusterwideNetworkPolicy
+      metadata:
+        name: baseline-allow-kube-dns
+      spec:
+        endpointSelector: {}
+        egress:
+          - toEndpoints:
+              - matchLabels:
+                  k8s:io.kubernetes.pod.namespace: kube-system
+                  k8s-app: kube-dns
+            toPorts:
+              - ports:
+                  - port: "53"
+                    protocol: UDP
+                  - port: "53"
+                    protocol: TCP
+  when: cilium_network_baseline_allow_dns
+
+- name: Apply cluster-wide allow health check policy
+  stevefulme1.cilium.cilium_clusterwide_network_policy:
+    kubeconfig: "{{ cilium_network_baseline_kubeconfig | default(omit) }}"
+    context: "{{ cilium_network_baseline_context | default(omit) }}"
+    name: baseline-allow-health-checks
+    state: "{{ cilium_network_baseline_state }}"
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumClusterwideNetworkPolicy
+      metadata:
+        name: baseline-allow-health-checks
+      spec:
+        endpointSelector: {}
+        ingress:
+          - fromEntities:
+              - health
+          - fromEndpoints:
+              - matchLabels:
+                  reserved:health: ""
+        egress:
+          - toEntities:
+              - health
+  when: cilium_network_baseline_allow_health_checks
+
+- name: Apply namespace-scoped deny all policies
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ cilium_network_baseline_kubeconfig | default(omit) }}"
+    context: "{{ cilium_network_baseline_context | default(omit) }}"
+    name: "baseline-deny-all-{{ item }}"
+    namespace: "{{ item }}"
+    state: "{{ cilium_network_baseline_state }}"
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumNetworkPolicy
+      metadata:
+        name: "baseline-deny-all-{{ item }}"
+        namespace: "{{ item }}"
+      spec:
+        endpointSelector: {}
+        ingress:
+          - {}
+        ingressDeny:
+          - fromEntities:
+              - world
+  loop: "{{ cilium_network_baseline_target_namespaces }}"
+  when:
+    - cilium_network_baseline_deny_all_ingress
+    - cilium_network_baseline_target_namespaces | length > 0
+
+- name: Display baseline policy status
+  ansible.builtin.debug:
+    msg: >-
+      Baseline policies applied: deny_ingress={{ cilium_network_baseline_deny_all_ingress }},
+      allow_dns={{ cilium_network_baseline_allow_dns }},
+      allow_health={{ cilium_network_baseline_allow_health_checks }}

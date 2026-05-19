@@ -1,0 +1,16 @@
+---
+cilium_hubble_namespace: kube-system
+cilium_hubble_relay_enabled: true
+cilium_hubble_ui_enabled: true
+cilium_hubble_metrics:
+  - dns
+  - drop
+  - tcp
+  - flow
+  - icmp
+  - http
+cilium_hubble_helm_release_name: cilium
+cilium_hubble_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_hubble_context: ""
+cilium_hubble_wait: true
+cilium_hubble_wait_timeout: 300

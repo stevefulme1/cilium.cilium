@@ -1,0 +1,78 @@
+---
+- name: Hubble Traffic Anomaly Response
+  hosts: all
+  sources:
+    - stevefulme1.cilium.cilium_hubble_flow:
+        hubble_endpoint: "{{ hubble_endpoint | default('localhost:4245') }}"
+  rules:
+    - name: Alert on high volume of dropped traffic
+      condition: >-
+        event.event_type == "cilium_hubble_flow" and
+        event.verdict == "DROPPED"
+      throttle:
+        group_by: "{{ event.destination.namespace }}/{{ event.destination.pod_name }}"
+        once_within: 120
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.alert_traffic_anomaly
+          extra_vars:
+            anomaly_type: high_drop_rate
+            source_namespace: "{{ event.source.namespace }}"
+            source_pod: "{{ event.source.pod_name }}"
+            destination_namespace: "{{ event.destination.namespace }}"
+            destination_pod: "{{ event.destination.pod_name }}"
+            destination_port: "{{ event.destination.port }}"
+            verdict: "{{ event.verdict }}"
+
+    - name: Gather flow data on DNS anomaly
+      condition: >-
+        event.event_type == "cilium_hubble_flow" and
+        event.verdict == "DROPPED" and
+        event.destination.port == 53
+      throttle:
+        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-dns"
+        once_within: 300
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.gather_flow_data
+          extra_vars:
+            investigation_type: dns_anomaly
+            source_namespace: "{{ event.source.namespace }}"
+            source_pod: "{{ event.source.pod_name }}"
+            node_name: "{{ event.node_name }}"
+
+    - name: Investigate unexpected external traffic
+      condition: >-
+        event.event_type == "cilium_hubble_flow" and
+        event.traffic_direction == "EGRESS" and
+        event.verdict == "DROPPED" and
+        event.destination.namespace == ""
+      throttle:
+        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-egress"
+        once_within: 300
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.gather_flow_data
+          extra_vars:
+            investigation_type: unexpected_egress
+            source_namespace: "{{ event.source.namespace }}"
+            source_pod: "{{ event.source.pod_name }}"
+            destination_ip: "{{ event.ip.destination }}"
+            node_name: "{{ event.node_name }}"
+
+    - name: Alert on error verdict flows
+      condition: >-
+        event.event_type == "cilium_hubble_flow" and
+        event.verdict == "ERROR"
+      throttle:
+        group_by: "{{ event.node_name }}-error"
+        once_within: 180
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.alert_traffic_anomaly
+          extra_vars:
+            anomaly_type: flow_error
+            source_namespace: "{{ event.source.namespace }}"
+            destination_namespace: "{{ event.destination.namespace }}"
+            node_name: "{{ event.node_name }}"
+            drop_reason: "{{ event.drop_reason_desc }}"

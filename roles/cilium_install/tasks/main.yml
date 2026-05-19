@@ -1,0 +1,63 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_install_namespace is defined
+      - cilium_install_chart_version is defined
+      - cilium_install_helm_repo is defined
+    quiet: true
+
+- name: Add Cilium Helm repository
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "{{ cilium_install_helm_repo }}"
+  when: cilium_install_state == 'present'
+
+- name: Deploy Cilium via Helm
+  kubernetes.core.helm:
+    name: "{{ cilium_install_helm_release_name }}"
+    chart_ref: cilium/cilium
+    chart_version: "{{ cilium_install_chart_version }}"
+    release_namespace: "{{ cilium_install_namespace }}"
+    create_namespace: true
+    kubeconfig: "{{ cilium_install_kubeconfig | default(omit) }}"
+    context: "{{ cilium_install_context | default(omit) }}"
+    wait: "{{ cilium_install_wait }}"
+    wait_timeout: "{{ cilium_install_wait_timeout }}s"
+    state: "{{ cilium_install_state }}"
+    values:
+      kubeProxyReplacement: "{{ cilium_install_kube_proxy_replacement }}"
+      hubble:
+        enabled: "{{ cilium_install_hubble_enabled }}"
+  register: cilium_install_helm_result
+
+- name: Wait for Cilium daemonset to be ready
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: cilium
+    namespace: "{{ cilium_install_namespace }}"
+    kubeconfig: "{{ cilium_install_kubeconfig | default(omit) }}"
+    context: "{{ cilium_install_context | default(omit) }}"
+  register: cilium_install_ds
+  until:
+    - cilium_install_ds.resources | length > 0
+    - cilium_install_ds.resources[0].status.numberReady | default(0) == cilium_install_ds.resources[0].status.desiredNumberScheduled | default(1)
+  retries: "{{ (cilium_install_wait_timeout / 10) | int }}"
+  delay: 10
+  when:
+    - cilium_install_state == 'present'
+    - cilium_install_wait
+
+- name: Verify Cilium installation status
+  stevefulme1.cilium.cilium_status_info:
+    kubeconfig: "{{ cilium_install_kubeconfig | default(omit) }}"
+    context: "{{ cilium_install_context | default(omit) }}"
+    namespace: "{{ cilium_install_namespace }}"
+  register: cilium_install_status
+  when: cilium_install_state == 'present'
+
+- name: Display Cilium installation status
+  ansible.builtin.debug:
+    msg: "Cilium {{ cilium_install_chart_version }} deployed successfully in {{ cilium_install_namespace }}"
+  when: cilium_install_state == 'present'

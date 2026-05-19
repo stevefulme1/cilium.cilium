@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: "Deploy Cilium CNI via Helm with full configuration"
+    options:
+      cilium_install_namespace:
+        description: Kubernetes namespace for Cilium deployment
+        type: str
+        default: kube-system
+      cilium_install_chart_version:
+        description: Cilium Helm chart version
+        type: str
+        default: "1.17.0"
+      cilium_install_helm_repo:
+        description: Cilium Helm chart repository URL
+        type: str
+        default: "https://helm.cilium.io/"
+      cilium_install_helm_release_name:
+        description: Helm release name
+        type: str
+        default: cilium
+      cilium_install_kube_proxy_replacement:
+        description: Enable kube-proxy replacement
+        type: bool
+        default: true
+      cilium_install_hubble_enabled:
+        description: Enable Hubble observability
+        type: bool
+        default: true
+      cilium_install_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_install_context:
+        description: Kubernetes context to use
+        type: str
+      cilium_install_wait:
+        description: Wait for Cilium pods to become ready
+        type: bool
+        default: true
+      cilium_install_wait_timeout:
+        description: Timeout in seconds waiting for pods
+        type: int
+        default: 300
+      cilium_install_state:
+        description: Desired state (present or absent)
+        type: str
+        default: present
+        choices: [present, absent]

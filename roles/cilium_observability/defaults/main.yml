@@ -1,0 +1,16 @@
+---
+cilium_observability_namespace: kube-system
+cilium_observability_prometheus_enabled: true
+cilium_observability_grafana_enabled: true
+cilium_observability_hubble_metrics:
+  - dns
+  - drop
+  - tcp
+  - flow
+cilium_observability_helm_release_name: cilium
+cilium_observability_prometheus_namespace: monitoring
+cilium_observability_grafana_namespace: monitoring
+cilium_observability_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_observability_context: ""
+cilium_observability_wait: true
+cilium_observability_wait_timeout: 300

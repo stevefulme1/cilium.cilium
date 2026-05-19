@@ -1,0 +1,160 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_security_hardening_namespace is defined
+    quiet: true
+
+- name: Apply privilege escalation monitoring policy
+  stevefulme1.cilium.cilium_tracing_policy:
+    kubeconfig: "{{ cilium_security_hardening_kubeconfig | default(omit) }}"
+    context: "{{ cilium_security_hardening_context | default(omit) }}"
+    name: hardening-privilege-escalation
+    state: "{{ cilium_security_hardening_state }}"
+    definition:
+      apiVersion: cilium.io/v1alpha1
+      kind: TracingPolicy
+      metadata:
+        name: hardening-privilege-escalation
+      spec:
+        kprobes:
+          - call: sys_setuid
+            syscall: true
+            args:
+              - index: 0
+                type: int
+            selectors:
+              - matchActions:
+                  - action: Post
+          - call: sys_setgid
+            syscall: true
+            args:
+              - index: 0
+                type: int
+            selectors:
+              - matchActions:
+                  - action: Post
+          - call: sys_execve
+            syscall: true
+            args:
+              - index: 0
+                type: string
+            selectors:
+              - matchArgs:
+                  - index: 0
+                    operator: Equal
+                    values:
+                      - /usr/bin/sudo
+                      - /usr/bin/su
+                      - /usr/bin/pkexec
+                      - /usr/bin/newgrp
+                matchActions:
+                  - action: Post
+  when: cilium_security_hardening_block_privilege_escalation
+
+- name: Apply sensitive file access monitoring policy
+  stevefulme1.cilium.cilium_tracing_policy:
+    kubeconfig: "{{ cilium_security_hardening_kubeconfig | default(omit) }}"
+    context: "{{ cilium_security_hardening_context | default(omit) }}"
+    name: hardening-sensitive-files
+    state: "{{ cilium_security_hardening_state }}"
+    definition:
+      apiVersion: cilium.io/v1alpha1
+      kind: TracingPolicy
+      metadata:
+        name: hardening-sensitive-files
+      spec:
+        kprobes:
+          - call: sys_openat
+            syscall: true
+            args:
+              - index: 0
+                type: int
+              - index: 1
+                type: string
+            selectors:
+              - matchArgs:
+                  - index: 1
+                    operator: Prefix
+                    values:
+                      - /etc/shadow
+                      - /etc/passwd
+                      - /etc/sudoers
+                      - /var/run/secrets/kubernetes.io
+                      - /root/.ssh
+                      - /root/.kube
+                      - /etc/kubernetes
+                matchActions:
+                  - action: Post
+          - call: sys_write
+            syscall: true
+            args:
+              - index: 0
+                type: fd
+              - index: 1
+                type: string
+            selectors:
+              - matchArgs:
+                  - index: 0
+                    operator: Prefix
+                    values:
+                      - /etc/crontab
+                      - /etc/cron.d
+                matchActions:
+                  - action: Post
+  when: cilium_security_hardening_monitor_sensitive_files
+
+- name: Apply network tool restriction monitoring policy
+  stevefulme1.cilium.cilium_tracing_policy:
+    kubeconfig: "{{ cilium_security_hardening_kubeconfig | default(omit) }}"
+    context: "{{ cilium_security_hardening_context | default(omit) }}"
+    name: hardening-network-tools
+    state: "{{ cilium_security_hardening_state }}"
+    definition:
+      apiVersion: cilium.io/v1alpha1
+      kind: TracingPolicy
+      metadata:
+        name: hardening-network-tools
+      spec:
+        kprobes:
+          - call: sys_execve
+            syscall: true
+            args:
+              - index: 0
+                type: string
+            selectors:
+              - matchArgs:
+                  - index: 0
+                    operator: Equal
+                    values:
+                      - /usr/bin/curl
+                      - /usr/bin/wget
+                      - /usr/bin/nc
+                      - /usr/bin/ncat
+                      - /usr/bin/nmap
+                      - /usr/bin/tcpdump
+                      - /usr/sbin/tcpdump
+                      - /usr/bin/ssh
+                      - /usr/bin/scp
+                      - /usr/bin/netcat
+                matchActions:
+                  - action: Post
+          - call: sys_connect
+            syscall: true
+            args:
+              - index: 0
+                type: int
+              - index: 1
+                type: sockaddr
+            selectors:
+              - matchActions:
+                  - action: Post
+  when: cilium_security_hardening_restrict_network_tools
+
+- name: Display security hardening status
+  ansible.builtin.debug:
+    msg: >-
+      Security hardening applied:
+      privilege_escalation={{ cilium_security_hardening_block_privilege_escalation }},
+      sensitive_files={{ cilium_security_hardening_monitor_sensitive_files }},
+      network_tools={{ cilium_security_hardening_restrict_network_tools }}

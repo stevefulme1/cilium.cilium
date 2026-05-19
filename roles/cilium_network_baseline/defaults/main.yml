@@ -1,0 +1,9 @@
+---
+cilium_network_baseline_namespace: kube-system
+cilium_network_baseline_deny_all_ingress: true
+cilium_network_baseline_allow_dns: true
+cilium_network_baseline_allow_health_checks: true
+cilium_network_baseline_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_network_baseline_context: ""
+cilium_network_baseline_target_namespaces: []
+cilium_network_baseline_state: present

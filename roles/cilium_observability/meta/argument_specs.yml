@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: "Deploy full Cilium observability stack"
+    options:
+      cilium_observability_namespace:
+        description: Kubernetes namespace for Cilium
+        type: str
+        default: kube-system
+      cilium_observability_prometheus_enabled:
+        description: Enable Prometheus metrics integration
+        type: bool
+        default: true
+      cilium_observability_grafana_enabled:
+        description: Enable Grafana dashboards
+        type: bool
+        default: true
+      cilium_observability_hubble_metrics:
+        description: Hubble metrics to enable
+        type: list
+        elements: str
+        default: [dns, drop, tcp, flow]
+      cilium_observability_helm_release_name:
+        description: Helm release name for Cilium
+        type: str
+        default: cilium
+      cilium_observability_prometheus_namespace:
+        description: Namespace for Prometheus ServiceMonitor
+        type: str
+        default: monitoring
+      cilium_observability_grafana_namespace:
+        description: Namespace for Grafana dashboards
+        type: str
+        default: monitoring
+      cilium_observability_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_observability_context:
+        description: Kubernetes context
+        type: str
+      cilium_observability_wait:
+        description: Wait for components to become ready
+        type: bool
+        default: true
+      cilium_observability_wait_timeout:
+        description: Timeout in seconds
+        type: int
+        default: 300

@@ -1,0 +1,43 @@
+---
+argument_specs:
+  main:
+    short_description: "Orchestrated Cilium upgrade workflow"
+    options:
+      cilium_upgrade_namespace:
+        description: Kubernetes namespace for Cilium
+        type: str
+        default: kube-system
+      cilium_upgrade_target_version:
+        description: Target Cilium version to upgrade to
+        type: str
+        required: true
+      cilium_upgrade_helm_release_name:
+        description: Helm release name
+        type: str
+        default: cilium
+      cilium_upgrade_pre_flight_check:
+        description: Run pre-flight validation before upgrade
+        type: bool
+        default: true
+      cilium_upgrade_post_upgrade_test:
+        description: Run connectivity test after upgrade
+        type: bool
+        default: true
+      cilium_upgrade_rolling_restart:
+        description: Perform rolling restart of Cilium pods
+        type: bool
+        default: true
+      cilium_upgrade_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_upgrade_context:
+        description: Kubernetes context to use
+        type: str
+      cilium_upgrade_wait:
+        description: Wait for upgrade to complete
+        type: bool
+        default: true
+      cilium_upgrade_wait_timeout:
+        description: Timeout in seconds
+        type: int
+        default: 600

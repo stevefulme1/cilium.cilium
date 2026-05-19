@@ -1,0 +1,114 @@
+---
+- name: Tetragon Security Event Response
+  hosts: all
+  sources:
+    - stevefulme1.cilium.cilium_tetragon_event:
+        tetragon_endpoint: "{{ tetragon_endpoint | default('127.0.0.1:54321') }}"
+        event_types:
+          - process_exec
+          - process_exit
+          - process_kprobe
+  rules:
+    - name: Alert on suspicious process execution
+      condition: >-
+        event.event_type == "tetragon_process_exec" and
+        (event.process.binary | regex_search("(curl|wget|nc|ncat|nmap|tcpdump|ssh|python|perl|ruby)$"))
+      throttle:
+        group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exec"
+        once_within: 120
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.alert_suspicious_process
+          extra_vars:
+            alert_type: suspicious_exec
+            binary: "{{ event.process.binary }}"
+            arguments: "{{ event.process.arguments }}"
+            pid: "{{ event.process.pid }}"
+            namespace: "{{ event.process.pod.namespace }}"
+            pod_name: "{{ event.process.pod.name }}"
+            container_name: "{{ event.process.pod.container.name }}"
+            container_image: "{{ event.process.pod.container.image }}"
+            node_name: "{{ event.node_name }}"
+
+    - name: Capture forensics on sensitive file access
+      condition: >-
+        event.event_type == "tetragon_process_kprobe" and
+        event.function_name == "sys_openat" and
+        event.policy_name is match("hardening-sensitive-files")
+      throttle:
+        group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-fileaccess"
+        once_within: 60
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.capture_forensics
+          extra_vars:
+            forensic_type: sensitive_file_access
+            binary: "{{ event.process.binary }}"
+            function: "{{ event.function_name }}"
+            args: "{{ event.args }}"
+            pid: "{{ event.process.pid }}"
+            namespace: "{{ event.process.pod.namespace }}"
+            pod_name: "{{ event.process.pod.name }}"
+            container_name: "{{ event.process.pod.container.name }}"
+            node_name: "{{ event.node_name }}"
+            policy_name: "{{ event.policy_name }}"
+
+    - name: Alert on privilege escalation attempt
+      condition: >-
+        event.event_type == "tetragon_process_kprobe" and
+        event.function_name is match("sys_set(uid|gid)")
+      throttle:
+        group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-privesc"
+        once_within: 60
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.alert_suspicious_process
+          extra_vars:
+            alert_type: privilege_escalation
+            binary: "{{ event.process.binary }}"
+            function: "{{ event.function_name }}"
+            pid: "{{ event.process.pid }}"
+            namespace: "{{ event.process.pod.namespace }}"
+            pod_name: "{{ event.process.pod.name }}"
+            container_name: "{{ event.process.pod.container.name }}"
+            node_name: "{{ event.node_name }}"
+
+    - name: Capture forensics on network syscall
+      condition: >-
+        event.event_type == "tetragon_process_kprobe" and
+        event.function_name == "sys_connect" and
+        event.policy_name is match("hardening-network-tools")
+      throttle:
+        group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-netsyscall"
+        once_within: 120
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.capture_forensics
+          extra_vars:
+            forensic_type: network_syscall
+            binary: "{{ event.process.binary }}"
+            function: "{{ event.function_name }}"
+            args: "{{ event.args }}"
+            pid: "{{ event.process.pid }}"
+            namespace: "{{ event.process.pod.namespace }}"
+            pod_name: "{{ event.process.pod.name }}"
+            node_name: "{{ event.node_name }}"
+            policy_name: "{{ event.policy_name }}"
+
+    - name: Log all process exits with non-zero status
+      condition: >-
+        event.event_type == "tetragon_process_exit" and
+        event.status != 0
+      throttle:
+        group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exit"
+        once_within: 60
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.log_process_exit
+          extra_vars:
+            binary: "{{ event.process.binary }}"
+            exit_status: "{{ event.status }}"
+            signal: "{{ event.signal }}"
+            namespace: "{{ event.process.pod.namespace }}"
+            pod_name: "{{ event.process.pod.name }}"
+            node_name: "{{ event.node_name }}"

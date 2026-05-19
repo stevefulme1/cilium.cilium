@@ -1,0 +1,11 @@
+---
+cilium_upgrade_namespace: kube-system
+cilium_upgrade_target_version: ""
+cilium_upgrade_helm_release_name: cilium
+cilium_upgrade_pre_flight_check: true
+cilium_upgrade_post_upgrade_test: true
+cilium_upgrade_rolling_restart: true
+cilium_upgrade_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_upgrade_context: ""
+cilium_upgrade_wait: true
+cilium_upgrade_wait_timeout: 600

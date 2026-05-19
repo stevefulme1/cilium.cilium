@@ -1,0 +1,211 @@
+---
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NAMESPACE: stevefulme1
+  COLLECTION: cilium
+
+jobs:
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install ansible-core>=2.16 ansible-lint yamllint flake8
+
+      - name: Run yamllint
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        run: yamllint -c .yamllint .
+
+      - name: Run flake8
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        run: flake8 plugins/ extensions/ --max-line-length=120 --ignore=E402,W503
+
+      - name: Run ansible-lint
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        run: ansible-lint --strict
+
+  sanity:
+    name: Sanity (Python ${{ matrix.python }} / Ansible ${{ matrix.ansible }})
+    runs-on: ubuntu-latest
+    needs: ansible-lint
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible:
+          - "2.16"
+          - "2.17"
+          - "2.18"
+          - "2.20"
+        python:
+          - "3.12"
+          - "3.13"
+        exclude:
+          - ansible: "2.16"
+            python: "3.13"
+          - ansible: "2.17"
+            python: "3.13"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install ansible-core ${{ matrix.ansible }}
+        run: pip install "ansible-core~=${{ matrix.ansible }}.0"
+
+      - name: Run sanity tests
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        run: >-
+          ansible-test sanity
+          --python ${{ matrix.python }}
+          --color yes
+          -v
+
+  unit:
+    name: Unit Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    needs: ansible-lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - "3.12"
+          - "3.13"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: pip install ansible-core>=2.16 kubernetes grpcio pytest pytest-cov
+
+      - name: Run unit tests
+        continue-on-error: true
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: >-
+          pytest tests/unit/
+          -v
+          --tb=short
+
+  integration-mock:
+    name: Integration (Kind Cluster)
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install ansible-core>=2.16 kubernetes grpcio
+
+      - name: Install kubernetes.core collection
+        run: ansible-galaxy collection install kubernetes.core
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: cilium-test
+          wait: 60s
+
+      - name: Install Cilium CLI
+        run: |
+          CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+          CLI_ARCH=amd64
+          curl -L --fail --remote-name-all \
+            "https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}"
+          sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+          sudo tar xzvf cilium-linux-${CLI_ARCH}.tar.gz -C /usr/local/bin
+          rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+
+      - name: Run integration tests (mock)
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          KUBECONFIG: ${{ env.HOME }}/.kube/config
+        run: >-
+          ansible-test integration
+          --python 3.12
+          --color yes
+          -v
+          --allow-unsupported
+        continue-on-error: true
+
+  integration-cloud:
+    name: Integration (Cilium Cluster)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    needs: unit
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install ansible-core>=2.16 kubernetes grpcio
+
+      - name: Install kubernetes.core collection
+        run: ansible-galaxy collection install kubernetes.core
+
+      - name: Write kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Run integration tests (cloud)
+        working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          KUBECONFIG: ~/.kube/config
+          CILIUM_NAMESPACE: ${{ secrets.CILIUM_NAMESPACE }}
+        run: >-
+          ansible-test integration
+          --python 3.12
+          --color yes
+          -v
+          --allow-unsupported

@@ -1,0 +1,74 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_hubble_namespace is defined
+      - cilium_hubble_helm_release_name is defined
+    quiet: true
+
+- name: Enable Hubble via Helm upgrade
+  kubernetes.core.helm:
+    name: "{{ cilium_hubble_helm_release_name }}"
+    chart_ref: cilium/cilium
+    release_namespace: "{{ cilium_hubble_namespace }}"
+    kubeconfig: "{{ cilium_hubble_kubeconfig | default(omit) }}"
+    context: "{{ cilium_hubble_context | default(omit) }}"
+    wait: "{{ cilium_hubble_wait }}"
+    wait_timeout: "{{ cilium_hubble_wait_timeout }}s"
+    state: present
+    values:
+      hubble:
+        enabled: true
+        relay:
+          enabled: "{{ cilium_hubble_relay_enabled }}"
+        ui:
+          enabled: "{{ cilium_hubble_ui_enabled }}"
+        metrics:
+          enabled: "{{ cilium_hubble_metrics }}"
+  register: cilium_hubble_helm_result
+
+- name: Wait for Hubble Relay deployment
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: hubble-relay
+    namespace: "{{ cilium_hubble_namespace }}"
+    kubeconfig: "{{ cilium_hubble_kubeconfig | default(omit) }}"
+    context: "{{ cilium_hubble_context | default(omit) }}"
+  register: cilium_hubble_relay_deploy
+  until:
+    - cilium_hubble_relay_deploy.resources | length > 0
+    - cilium_hubble_relay_deploy.resources[0].status.readyReplicas | default(0) > 0
+  retries: "{{ (cilium_hubble_wait_timeout / 10) | int }}"
+  delay: 10
+  when: cilium_hubble_relay_enabled and cilium_hubble_wait
+
+- name: Wait for Hubble UI deployment
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: hubble-ui
+    namespace: "{{ cilium_hubble_namespace }}"
+    kubeconfig: "{{ cilium_hubble_kubeconfig | default(omit) }}"
+    context: "{{ cilium_hubble_context | default(omit) }}"
+  register: cilium_hubble_ui_deploy
+  until:
+    - cilium_hubble_ui_deploy.resources | length > 0
+    - cilium_hubble_ui_deploy.resources[0].status.readyReplicas | default(0) > 0
+  retries: "{{ (cilium_hubble_wait_timeout / 10) | int }}"
+  delay: 10
+  when: cilium_hubble_ui_enabled and cilium_hubble_wait
+
+- name: Verify Hubble status
+  stevefulme1.cilium.cilium_hubble_info:
+    kubeconfig: "{{ cilium_hubble_kubeconfig | default(omit) }}"
+    context: "{{ cilium_hubble_context | default(omit) }}"
+    namespace: "{{ cilium_hubble_namespace }}"
+  register: cilium_hubble_status
+
+- name: Display Hubble status
+  ansible.builtin.debug:
+    msg: >-
+      Hubble enabled with relay={{ cilium_hubble_relay_enabled }},
+      ui={{ cilium_hubble_ui_enabled }},
+      metrics={{ cilium_hubble_metrics | join(',') }}

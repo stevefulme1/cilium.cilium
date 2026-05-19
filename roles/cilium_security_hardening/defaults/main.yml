@@ -1,0 +1,8 @@
+---
+cilium_security_hardening_namespace: kube-system
+cilium_security_hardening_block_privilege_escalation: true
+cilium_security_hardening_monitor_sensitive_files: true
+cilium_security_hardening_restrict_network_tools: true
+cilium_security_hardening_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_security_hardening_context: ""
+cilium_security_hardening_state: present

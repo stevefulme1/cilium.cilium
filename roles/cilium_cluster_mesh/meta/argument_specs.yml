@@ -1,0 +1,46 @@
+---
+argument_specs:
+  main:
+    short_description: "Configure Cilium Cluster Mesh for multi-cluster networking"
+    options:
+      cilium_cluster_mesh_namespace:
+        description: Kubernetes namespace for Cilium
+        type: str
+        default: kube-system
+      cilium_cluster_mesh_service_type:
+        description: Service type for cluster mesh API server
+        type: str
+        default: ClusterIP
+        choices: [ClusterIP, NodePort, LoadBalancer]
+      cilium_cluster_mesh_enable_endpoint_slice:
+        description: Enable EndpointSlice synchronization
+        type: bool
+        default: true
+      cilium_cluster_mesh_helm_release_name:
+        description: Helm release name for Cilium
+        type: str
+        default: cilium
+      cilium_cluster_mesh_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_cluster_mesh_context:
+        description: Kubernetes context for local cluster
+        type: str
+      cilium_cluster_mesh_remote_contexts:
+        description: List of remote cluster contexts to connect
+        type: list
+        elements: str
+        default: []
+      cilium_cluster_mesh_wait:
+        description: Wait for cluster mesh to become ready
+        type: bool
+        default: true
+      cilium_cluster_mesh_wait_timeout:
+        description: Timeout in seconds
+        type: int
+        default: 300
+      cilium_cluster_mesh_state:
+        description: Desired state
+        type: str
+        default: present
+        choices: [present, absent]

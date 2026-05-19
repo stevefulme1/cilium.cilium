@@ -1,0 +1,6 @@
+---
+test_namespace: kube-system
+test_chart_version: "1.17.0"
+test_helm_release: cilium-test
+test_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+test_wait_timeout: 300

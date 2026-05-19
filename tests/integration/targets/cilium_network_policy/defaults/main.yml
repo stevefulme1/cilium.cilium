@@ -1,0 +1,6 @@
+---
+test_namespace: cilium-test
+test_policy_name: integration-test-policy
+test_policy_description: "CiliumNetworkPolicy integration test"
+test_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+test_wait_timeout: 60

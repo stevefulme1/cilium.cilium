@@ -1,0 +1,93 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_upgrade_namespace is defined
+      - cilium_upgrade_target_version | length > 0
+    fail_msg: "cilium_upgrade_target_version must be specified"
+    quiet: true
+
+- name: Get current Cilium status
+  stevefulme1.cilium.cilium_status_info:
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
+  register: cilium_upgrade_current_status
+
+- name: Display current Cilium version
+  ansible.builtin.debug:
+    msg: "Current Cilium status retrieved, upgrading to {{ cilium_upgrade_target_version }}"
+
+- name: Run pre-flight connectivity test
+  stevefulme1.cilium.cilium_connectivity_test:
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
+  register: cilium_upgrade_preflight_result
+  when: cilium_upgrade_pre_flight_check
+
+- name: Verify pre-flight check passed
+  ansible.builtin.assert:
+    that:
+      - cilium_upgrade_preflight_result is not failed
+    fail_msg: "Pre-flight connectivity test failed. Aborting upgrade."
+    quiet: true
+  when: cilium_upgrade_pre_flight_check
+
+- name: Upgrade Cilium via Helm
+  kubernetes.core.helm:
+    name: "{{ cilium_upgrade_helm_release_name }}"
+    chart_ref: cilium/cilium
+    chart_version: "{{ cilium_upgrade_target_version }}"
+    release_namespace: "{{ cilium_upgrade_namespace }}"
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+    wait: "{{ cilium_upgrade_wait }}"
+    wait_timeout: "{{ cilium_upgrade_wait_timeout }}s"
+    state: present
+  register: cilium_upgrade_helm_result
+
+- name: Wait for Cilium daemonset rollout
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: cilium
+    namespace: "{{ cilium_upgrade_namespace }}"
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+  register: cilium_upgrade_ds
+  until:
+    - cilium_upgrade_ds.resources | length > 0
+    - cilium_upgrade_ds.resources[0].status.updatedNumberScheduled | default(0) == cilium_upgrade_ds.resources[0].status.desiredNumberScheduled | default(1)
+    - cilium_upgrade_ds.resources[0].status.numberReady | default(0) == cilium_upgrade_ds.resources[0].status.desiredNumberScheduled | default(1)
+  retries: "{{ (cilium_upgrade_wait_timeout / 10) | int }}"
+  delay: 10
+  when: cilium_upgrade_wait
+
+- name: Perform rolling restart of Cilium pods
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: cilium
+    namespace: "{{ cilium_upgrade_namespace }}"
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              cilium.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+  when: cilium_upgrade_rolling_restart
+
+- name: Run post-upgrade connectivity test
+  stevefulme1.cilium.cilium_connectivity_test:
+    kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
+    context: "{{ cilium_upgrade_context | default(omit) }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
+  register: cilium_upgrade_posttest_result
+  when: cilium_upgrade_post_upgrade_test
+
+- name: Display upgrade result
+  ansible.builtin.debug:
+    msg: "Cilium upgraded to {{ cilium_upgrade_target_version }} successfully"

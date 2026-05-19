@@ -1,0 +1,32 @@
+---
+argument_specs:
+  main:
+    short_description: "Security hardening with Tetragon and network policies"
+    options:
+      cilium_security_hardening_namespace:
+        description: Kubernetes namespace
+        type: str
+        default: kube-system
+      cilium_security_hardening_block_privilege_escalation:
+        description: Monitor and alert on privilege escalation attempts
+        type: bool
+        default: true
+      cilium_security_hardening_monitor_sensitive_files:
+        description: Monitor access to sensitive files
+        type: bool
+        default: true
+      cilium_security_hardening_restrict_network_tools:
+        description: Monitor network tool usage
+        type: bool
+        default: true
+      cilium_security_hardening_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_security_hardening_context:
+        description: Kubernetes context
+        type: str
+      cilium_security_hardening_state:
+        description: Desired state
+        type: str
+        default: present
+        choices: [present, absent]

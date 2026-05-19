@@ -1,0 +1,18 @@
+[default]
+# Cilium integration test configuration
+# Copy this file to cloud-config-cilium.ini and fill in values
+
+# Path to kubeconfig file with access to a Cilium-enabled cluster
+kubeconfig={{ KUBECONFIG | default("~/.kube/config") }}
+
+# Kubernetes context to use (leave empty for current-context)
+context={{ KUBE_CONTEXT | default("") }}
+
+# Namespace for Cilium (typically kube-system)
+namespace={{ CILIUM_NAMESPACE | default("kube-system") }}
+
+# Cilium Helm chart version for install/upgrade tests
+cilium_version={{ CILIUM_VERSION | default("1.17.0") }}
+
+# Tetragon Helm chart version for tracing policy tests
+tetragon_version={{ TETRAGON_VERSION | default("1.3.0") }}

@@ -1,0 +1,37 @@
+---
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...100"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: true
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "tests/**"
+  - "changelogs/**"
+  - "docs/**"
+  - "noxfile.py"
+  - "plugins/modules/__init__.py"
+  - "plugins/module_utils/__init__.py"

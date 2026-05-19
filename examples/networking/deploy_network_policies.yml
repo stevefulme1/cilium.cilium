@@ -1,0 +1,52 @@
+---
+- name: Deploy Cilium network policies
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Allow web traffic from frontend to backend
+      stevefulme1.cilium.cilium_network_policy:
+        name: allow-frontend-to-backend
+        namespace: production
+        endpoint_selector:
+          matchLabels:
+            app: backend
+        ingress:
+          - fromEndpoints:
+              - matchLabels:
+                  app: frontend
+            toPorts:
+              - ports:
+                  - port: "8080"
+                    protocol: TCP
+        state: present
+
+    - name: Allow DNS for all pods
+      stevefulme1.cilium.cilium_clusterwide_network_policy:
+        name: allow-dns
+        endpoint_selector: {}
+        egress:
+          - toEndpoints:
+              - matchLabels:
+                  k8s:io.kubernetes.pod.namespace: kube-system
+                  k8s-app: kube-dns
+            toPorts:
+              - ports:
+                  - port: "53"
+                    protocol: UDP
+                rules:
+                  dns:
+                    - matchPattern: "*"
+        state: present
+
+    - name: Configure BGP peering
+      stevefulme1.cilium.cilium_bgp_peering_policy:
+        name: rack-bgp
+        node_selector:
+          matchLabels:
+            rack: rack-1
+        virtual_routers:
+          - localASN: 65001
+            neighbors:
+              - peerASN: 65000
+                peerAddress: 10.0.0.1/32
+        state: present

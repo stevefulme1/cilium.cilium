@@ -1,0 +1,37 @@
+---
+argument_specs:
+  main:
+    short_description: "Apply baseline Cilium network policies"
+    options:
+      cilium_network_baseline_namespace:
+        description: Cilium namespace
+        type: str
+        default: kube-system
+      cilium_network_baseline_deny_all_ingress:
+        description: Apply default deny ingress policy
+        type: bool
+        default: true
+      cilium_network_baseline_allow_dns:
+        description: Allow DNS traffic to kube-dns
+        type: bool
+        default: true
+      cilium_network_baseline_allow_health_checks:
+        description: Allow health check endpoints
+        type: bool
+        default: true
+      cilium_network_baseline_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_network_baseline_context:
+        description: Kubernetes context
+        type: str
+      cilium_network_baseline_target_namespaces:
+        description: Namespaces to apply policies to (empty means cluster-wide)
+        type: list
+        elements: str
+        default: []
+      cilium_network_baseline_state:
+        description: Desired state
+        type: str
+        default: present
+        choices: [present, absent]

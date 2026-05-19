@@ -1,0 +1,40 @@
+---
+argument_specs:
+  main:
+    short_description: "Deploy Hubble observability stack for Cilium"
+    options:
+      cilium_hubble_namespace:
+        description: Kubernetes namespace for Cilium
+        type: str
+        default: kube-system
+      cilium_hubble_relay_enabled:
+        description: Enable Hubble Relay
+        type: bool
+        default: true
+      cilium_hubble_ui_enabled:
+        description: Enable Hubble UI
+        type: bool
+        default: true
+      cilium_hubble_metrics:
+        description: List of Hubble metrics to enable
+        type: list
+        elements: str
+        default: [dns, drop, tcp, flow, icmp, http]
+      cilium_hubble_helm_release_name:
+        description: Helm release name for Cilium
+        type: str
+        default: cilium
+      cilium_hubble_kubeconfig:
+        description: Path to kubeconfig file
+        type: str
+      cilium_hubble_context:
+        description: Kubernetes context to use
+        type: str
+      cilium_hubble_wait:
+        description: Wait for Hubble pods to become ready
+        type: bool
+        default: true
+      cilium_hubble_wait_timeout:
+        description: Timeout in seconds waiting for pods
+        type: int
+        default: 300

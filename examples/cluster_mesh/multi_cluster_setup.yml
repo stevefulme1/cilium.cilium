@@ -1,0 +1,29 @@
+---
+- name: Set up Cilium Cluster Mesh
+  hosts: localhost
+  connection: local
+  roles:
+    - role: stevefulme1.cilium.cilium_cluster_mesh
+      cilium_cluster_mesh_enabled: true
+      cilium_cluster_mesh_service_type: LoadBalancer
+
+  tasks:
+    - name: Verify Cluster Mesh status
+      stevefulme1.cilium.cilium_cluster_mesh_info: {}
+      register: mesh_status
+
+    - name: Display mesh status
+      ansible.builtin.debug:
+        var: mesh_status.resource
+
+    - name: Apply global service policy
+      stevefulme1.cilium.cilium_clusterwide_network_policy:
+        name: allow-cross-cluster-services
+        endpoint_selector:
+          matchLabels:
+            io.cilium.service.global: "true"
+        ingress:
+          - fromEntities:
+              - cluster
+              - remote-node
+        state: present

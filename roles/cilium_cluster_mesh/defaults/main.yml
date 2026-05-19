@@ -1,0 +1,11 @@
+---
+cilium_cluster_mesh_namespace: kube-system
+cilium_cluster_mesh_service_type: ClusterIP
+cilium_cluster_mesh_enable_endpoint_slice: true
+cilium_cluster_mesh_helm_release_name: cilium
+cilium_cluster_mesh_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+cilium_cluster_mesh_context: ""
+cilium_cluster_mesh_remote_contexts: []
+cilium_cluster_mesh_wait: true
+cilium_cluster_mesh_wait_timeout: 300
+cilium_cluster_mesh_state: present

@@ -1,0 +1,35 @@
+---
+- name: Enable Hubble observability stack
+  hosts: localhost
+  connection: local
+  roles:
+    - role: stevefulme1.cilium.cilium_hubble
+      cilium_hubble_relay_enabled: true
+      cilium_hubble_ui_enabled: true
+      cilium_hubble_metrics:
+        - dns
+        - drop
+        - tcp
+        - flow
+        - icmp
+        - http
+
+  tasks:
+    - name: Configure Prometheus metrics
+      stevefulme1.cilium.cilium_metrics_config:
+        metrics:
+          - dns:query;ignoreAAAA
+          - drop
+          - tcp
+          - flow
+          - icmp
+          - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,destination_ip
+        state: present
+
+    - name: Verify Hubble is running
+      stevefulme1.cilium.cilium_hubble_info: {}
+      register: hubble_status
+
+    - name: Display Hubble status
+      ansible.builtin.debug:
+        var: hubble_status.resource

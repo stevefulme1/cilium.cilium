@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: Steve Fulmer
+  description: "Deploy full Cilium observability stack with Prometheus and Grafana"
+  license: Apache-2.0
+  min_ansible_version: '2.16'
+  galaxy_tags: [cilium, observability, prometheus, grafana, hubble]
+dependencies: []

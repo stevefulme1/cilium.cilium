@@ -1,0 +1,56 @@
+---
+- name: Cilium Policy Violation Remediation
+  hosts: all
+  sources:
+    - stevefulme1.cilium.cilium_policy_event:
+        hubble_endpoint: "{{ hubble_endpoint | default('localhost:4245') }}"
+        verdict_filter: DROPPED
+  rules:
+    - name: Log policy violation details
+      condition: event.event_type == "cilium_policy_violation"
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.log_policy_violation
+          extra_vars:
+            source_namespace: "{{ event.source.namespace }}"
+            source_pod: "{{ event.source.pod_name }}"
+            destination_namespace: "{{ event.destination.namespace }}"
+            destination_pod: "{{ event.destination.pod_name }}"
+            destination_port: "{{ event.destination.port }}"
+            drop_reason: "{{ event.drop_reason_desc }}"
+            verdict: "{{ event.verdict }}"
+
+    - name: Alert on repeated policy violations from same source
+      condition: >-
+        event.event_type == "cilium_policy_violation" and
+        event.source.namespace != "" and
+        event.destination.namespace != ""
+      throttle:
+        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}"
+        once_within: 300
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.alert_repeated_violation
+          extra_vars:
+            source_namespace: "{{ event.source.namespace }}"
+            source_pod: "{{ event.source.pod_name }}"
+            destination_namespace: "{{ event.destination.namespace }}"
+            destination_pod: "{{ event.destination.pod_name }}"
+            destination_port: "{{ event.destination.port }}"
+
+    - name: Create stricter policy on cross-namespace violation
+      condition: >-
+        event.event_type == "cilium_policy_violation" and
+        event.source.namespace != event.destination.namespace and
+        event.source.namespace != "" and
+        event.destination.namespace != ""
+      throttle:
+        group_by: "{{ event.source.namespace }}-to-{{ event.destination.namespace }}"
+        once_within: 600
+      action:
+        run_playbook:
+          name: stevefulme1.cilium.create_deny_policy
+          extra_vars:
+            source_namespace: "{{ event.source.namespace }}"
+            destination_namespace: "{{ event.destination.namespace }}"
+            destination_port: "{{ event.destination.port }}"

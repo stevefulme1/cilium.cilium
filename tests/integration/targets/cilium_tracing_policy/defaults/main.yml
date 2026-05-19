@@ -1,0 +1,4 @@
+---
+test_policy_name: integration-test-tracing
+test_kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/config', true) }}"
+test_wait_timeout: 60

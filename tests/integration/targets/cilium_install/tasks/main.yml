@@ -1,0 +1,83 @@
+---
+# --- INSTALL ---
+- name: Install Cilium via module
+  stevefulme1.cilium.cilium_install:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace }}"
+    version: "{{ test_chart_version }}"
+    helm_release_name: "{{ test_helm_release }}"
+    kube_proxy_replacement: true
+    hubble_enabled: true
+    wait: true
+    wait_timeout: "{{ test_wait_timeout }}"
+    state: present
+  register: install_result
+
+- name: Verify installation
+  ansible.builtin.assert:
+    that:
+      - install_result is changed
+    quiet: true
+
+# --- IDEMPOTENCY ---
+- name: Install Cilium again (idempotency check)
+  stevefulme1.cilium.cilium_install:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace }}"
+    version: "{{ test_chart_version }}"
+    helm_release_name: "{{ test_helm_release }}"
+    kube_proxy_replacement: true
+    hubble_enabled: true
+    wait: true
+    wait_timeout: "{{ test_wait_timeout }}"
+    state: present
+  register: idempotent_result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - idempotent_result is not changed
+    quiet: true
+
+# --- STATUS CHECK ---
+- name: Get Cilium status
+  stevefulme1.cilium.cilium_status_info:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace }}"
+  register: status_result
+
+- name: Verify status
+  ansible.builtin.assert:
+    that:
+      - status_result.resources is defined
+    quiet: true
+
+# --- UNINSTALL ---
+- name: Uninstall Cilium
+  stevefulme1.cilium.cilium_install:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace }}"
+    helm_release_name: "{{ test_helm_release }}"
+    state: absent
+  register: uninstall_result
+
+- name: Verify uninstall
+  ansible.builtin.assert:
+    that:
+      - uninstall_result is changed
+    quiet: true
+
+# --- UNINSTALL IDEMPOTENCY ---
+- name: Uninstall again (idempotency check)
+  stevefulme1.cilium.cilium_install:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace }}"
+    helm_release_name: "{{ test_helm_release }}"
+    state: absent
+  register: uninstall_again_result
+
+- name: Verify uninstall idempotency
+  ansible.builtin.assert:
+    that:
+      - uninstall_again_result is not changed
+    quiet: true

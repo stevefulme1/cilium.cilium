@@ -1,0 +1,75 @@
+---
+- name: Validate required parameters
+  ansible.builtin.assert:
+    that:
+      - cilium_cluster_mesh_namespace is defined
+      - cilium_cluster_mesh_helm_release_name is defined
+    quiet: true
+
+- name: Enable Cluster Mesh via Helm upgrade
+  kubernetes.core.helm:
+    name: "{{ cilium_cluster_mesh_helm_release_name }}"
+    chart_ref: cilium/cilium
+    release_namespace: "{{ cilium_cluster_mesh_namespace }}"
+    kubeconfig: "{{ cilium_cluster_mesh_kubeconfig | default(omit) }}"
+    context: "{{ cilium_cluster_mesh_context | default(omit) }}"
+    wait: "{{ cilium_cluster_mesh_wait }}"
+    wait_timeout: "{{ cilium_cluster_mesh_wait_timeout }}s"
+    state: "{{ cilium_cluster_mesh_state }}"
+    values:
+      cluster:
+        name: "{{ cilium_cluster_mesh_context | default('default') }}"
+      clustermesh:
+        useAPIServer: true
+        apiserver:
+          service:
+            type: "{{ cilium_cluster_mesh_service_type }}"
+      endpointSlice:
+        enabled: "{{ cilium_cluster_mesh_enable_endpoint_slice }}"
+  register: cilium_cluster_mesh_helm_result
+  when: cilium_cluster_mesh_state == 'present'
+
+- name: Wait for Cluster Mesh API server
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: clustermesh-apiserver
+    namespace: "{{ cilium_cluster_mesh_namespace }}"
+    kubeconfig: "{{ cilium_cluster_mesh_kubeconfig | default(omit) }}"
+    context: "{{ cilium_cluster_mesh_context | default(omit) }}"
+  register: cilium_cluster_mesh_apiserver
+  until:
+    - cilium_cluster_mesh_apiserver.resources | length > 0
+    - cilium_cluster_mesh_apiserver.resources[0].status.readyReplicas | default(0) > 0
+  retries: "{{ (cilium_cluster_mesh_wait_timeout / 10) | int }}"
+  delay: 10
+  when:
+    - cilium_cluster_mesh_state == 'present'
+    - cilium_cluster_mesh_wait
+
+- name: Connect remote clusters
+  stevefulme1.cilium.cilium_cluster_mesh:
+    kubeconfig: "{{ cilium_cluster_mesh_kubeconfig | default(omit) }}"
+    context: "{{ cilium_cluster_mesh_context | default(omit) }}"
+    namespace: "{{ cilium_cluster_mesh_namespace }}"
+    remote_context: "{{ item }}"
+    state: present
+  loop: "{{ cilium_cluster_mesh_remote_contexts }}"
+  when:
+    - cilium_cluster_mesh_state == 'present'
+    - cilium_cluster_mesh_remote_contexts | length > 0
+
+- name: Verify Cluster Mesh status
+  stevefulme1.cilium.cilium_cluster_mesh_info:
+    kubeconfig: "{{ cilium_cluster_mesh_kubeconfig | default(omit) }}"
+    context: "{{ cilium_cluster_mesh_context | default(omit) }}"
+    namespace: "{{ cilium_cluster_mesh_namespace }}"
+  register: cilium_cluster_mesh_status
+  when: cilium_cluster_mesh_state == 'present'
+
+- name: Display Cluster Mesh status
+  ansible.builtin.debug:
+    msg: >-
+      Cluster Mesh enabled with service_type={{ cilium_cluster_mesh_service_type }},
+      remote_clusters={{ cilium_cluster_mesh_remote_contexts | length }}
+  when: cilium_cluster_mesh_state == 'present'

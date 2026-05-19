@@ -1,0 +1,164 @@
+---
+- name: Ensure test namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ test_namespace }}"
+    state: present
+    kubeconfig: "{{ test_kubeconfig }}"
+
+# --- CREATE ---
+- name: Create CiliumNetworkPolicy
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+    state: present
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumNetworkPolicy
+      metadata:
+        name: "{{ test_policy_name }}"
+        namespace: "{{ test_namespace }}"
+      spec:
+        endpointSelector:
+          matchLabels:
+            app: test-app
+        ingress:
+          - fromEndpoints:
+              - matchLabels:
+                  app: allowed-client
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+  register: create_result
+
+- name: Verify creation
+  ansible.builtin.assert:
+    that:
+      - create_result is changed
+      - create_result.result.metadata.name == test_policy_name
+    quiet: true
+
+# --- IDEMPOTENCY ---
+- name: Create same policy again (idempotency check)
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+    state: present
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumNetworkPolicy
+      metadata:
+        name: "{{ test_policy_name }}"
+        namespace: "{{ test_namespace }}"
+      spec:
+        endpointSelector:
+          matchLabels:
+            app: test-app
+        ingress:
+          - fromEndpoints:
+              - matchLabels:
+                  app: allowed-client
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+  register: idempotent_result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - idempotent_result is not changed
+    quiet: true
+
+# --- GET INFO ---
+- name: Get policy info
+  stevefulme1.cilium.cilium_network_policy_info:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+  register: info_result
+
+- name: Verify info retrieval
+  ansible.builtin.assert:
+    that:
+      - info_result.resources | length == 1
+      - info_result.resources[0].metadata.name == test_policy_name
+    quiet: true
+
+# --- UPDATE ---
+- name: Update CiliumNetworkPolicy
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+    state: present
+    definition:
+      apiVersion: cilium.io/v2
+      kind: CiliumNetworkPolicy
+      metadata:
+        name: "{{ test_policy_name }}"
+        namespace: "{{ test_namespace }}"
+      spec:
+        endpointSelector:
+          matchLabels:
+            app: test-app
+        ingress:
+          - fromEndpoints:
+              - matchLabels:
+                  app: allowed-client
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+                  - port: "443"
+                    protocol: TCP
+  register: update_result
+
+- name: Verify update
+  ansible.builtin.assert:
+    that:
+      - update_result is changed
+    quiet: true
+
+# --- DELETE ---
+- name: Delete CiliumNetworkPolicy
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+    state: absent
+  register: delete_result
+
+- name: Verify deletion
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+    quiet: true
+
+# --- DELETE IDEMPOTENCY ---
+- name: Delete again (idempotency check)
+  stevefulme1.cilium.cilium_network_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    name: "{{ test_policy_name }}"
+    namespace: "{{ test_namespace }}"
+    state: absent
+  register: delete_again_result
+
+- name: Verify delete idempotency
+  ansible.builtin.assert:
+    that:
+      - delete_again_result is not changed
+    quiet: true
+
+# --- CLEANUP ---
+- name: Remove test namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ test_namespace }}"
+    state: absent
+    kubeconfig: "{{ test_kubeconfig }}"
