@@ -45,7 +45,7 @@
         event.source.namespace != "" and
         event.destination.namespace != ""
       throttle:
-        once_within: "600"
+        once_within: "600 seconds"
         group_by_attributes: []
       action:
         run_playbook:

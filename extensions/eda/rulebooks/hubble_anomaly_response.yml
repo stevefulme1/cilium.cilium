@@ -65,7 +65,7 @@
         event.event_type == "cilium_hubble_flow" and
         event.verdict == "ERROR"
       throttle:
-        once_within: "180"
+        once_within: "180 seconds"
         group_by_attributes: []
       action:
         run_playbook:
