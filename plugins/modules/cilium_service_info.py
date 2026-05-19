@@ -83,8 +83,6 @@ try:
 except ImportError:
     HAS_K8S_SDK = False
 
-)
-
 
 def main():
     argument_spec = dict(
