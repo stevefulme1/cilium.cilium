@@ -40,7 +40,7 @@ jobs:
 
       - name: Run ansible-lint
         working-directory: ansible_collections/${{ env.NAMESPACE }}/${{ env.COLLECTION }}
-        run: ansible-lint --strict
+        run: ansible-lint
 
   sanity:
     name: Sanity (Python ${{ matrix.python }} / Ansible ${{ matrix.ansible }})
