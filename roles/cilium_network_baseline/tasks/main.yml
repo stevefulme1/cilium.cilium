@@ -11,7 +11,7 @@
     context: "{{ cilium_network_baseline_context | default(omit) }}"
     name: baseline-deny-all-ingress
     state: "{{ cilium_network_baseline_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v2
       kind: CiliumClusterwideNetworkPolicy
       metadata:
@@ -31,7 +31,7 @@
     context: "{{ cilium_network_baseline_context | default(omit) }}"
     name: baseline-allow-kube-dns
     state: "{{ cilium_network_baseline_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v2
       kind: CiliumClusterwideNetworkPolicy
       metadata:
@@ -57,7 +57,7 @@
     context: "{{ cilium_network_baseline_context | default(omit) }}"
     name: baseline-allow-health-checks
     state: "{{ cilium_network_baseline_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v2
       kind: CiliumClusterwideNetworkPolicy
       metadata:
@@ -82,7 +82,7 @@
     name: "baseline-deny-all-{{ item }}"
     namespace: "{{ item }}"
     state: "{{ cilium_network_baseline_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v2
       kind: CiliumNetworkPolicy
       metadata:

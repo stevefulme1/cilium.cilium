@@ -50,7 +50,7 @@
     context: "{{ cilium_tetragon_context | default(omit) }}"
     name: baseline-process-monitor
     state: present
-    definition:
+    spec:
       apiVersion: cilium.io/v1alpha1
       kind: TracingPolicy
       metadata:
@@ -75,7 +75,7 @@
     context: "{{ cilium_tetragon_context | default(omit) }}"
     name: baseline-file-monitor
     state: present
-    definition:
+    spec:
       apiVersion: cilium.io/v1alpha1
       kind: TracingPolicy
       metadata:

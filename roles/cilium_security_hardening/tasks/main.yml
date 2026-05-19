@@ -11,7 +11,7 @@
     context: "{{ cilium_security_hardening_context | default(omit) }}"
     name: hardening-privilege-escalation
     state: "{{ cilium_security_hardening_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v1alpha1
       kind: TracingPolicy
       metadata:
@@ -58,7 +58,7 @@
     context: "{{ cilium_security_hardening_context | default(omit) }}"
     name: hardening-sensitive-files
     state: "{{ cilium_security_hardening_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v1alpha1
       kind: TracingPolicy
       metadata:
@@ -110,7 +110,7 @@
     context: "{{ cilium_security_hardening_context | default(omit) }}"
     name: hardening-network-tools
     state: "{{ cilium_security_hardening_state }}"
-    definition:
+    spec:
       apiVersion: cilium.io/v1alpha1
       kind: TracingPolicy
       metadata:

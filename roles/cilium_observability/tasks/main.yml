@@ -54,7 +54,7 @@
     kubeconfig: "{{ cilium_observability_kubeconfig | default(omit) }}"
     context: "{{ cilium_observability_context | default(omit) }}"
     state: present
-    definition:
+    spec:
       apiVersion: v1
       kind: ConfigMap
       metadata:

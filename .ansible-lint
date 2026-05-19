@@ -2,3 +2,5 @@
 exclude_paths:
   - tests/integration/
   - extensions/molecule/
+warn_list:
+  - args[module]
