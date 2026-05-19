@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 class TestModuleUtil:
     def test_import(self):
         """Verify the module can be referenced."""
-        assert "cilium_k8s" is not None
+        assert "cilium_k8s" != ""
 
     def test_client_factory(self):
         client = MagicMock()
