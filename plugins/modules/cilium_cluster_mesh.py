@@ -102,7 +102,7 @@ values:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client, config
+    import kubernetes  # noqa: F401
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False

@@ -123,8 +123,10 @@ def _match_filter(flow_dict, source_filter, destination_filter, verdict_filter, 
     return True
 
 
-async def _stream_hubble_flows(queue, endpoint, source_filter, destination_filter,
-                                verdict_filter, protocol_filter, reconnect_delay):
+async def _stream_hubble_flows(
+    queue, endpoint, source_filter, destination_filter,
+    verdict_filter, protocol_filter, reconnect_delay,
+):
     """Stream flows from Hubble Relay using gRPC."""
     while True:
         try:

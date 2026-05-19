@@ -117,11 +117,10 @@ pre_flight:
   returned: when pre_flight_check is true
 """
 
-import json
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client, config
+    from kubernetes import client as _k8s_client  # noqa: F401
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False
@@ -170,7 +169,6 @@ def main():
         module.fail_json(msg="Cilium release '%s' not found in namespace '%s'" % (release_name, namespace))
 
     # Determine current version
-    current_info = existing.get("info", {})
     previous_version = existing.get("chart", {}).get("metadata", {}).get("version", "unknown")
 
     result = dict(

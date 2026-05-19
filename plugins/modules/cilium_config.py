@@ -85,7 +85,7 @@ changed_keys:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client, config
+    from kubernetes import client, config  # noqa: F401
     from kubernetes.client.rest import ApiException
     HAS_K8S_SDK = True
 except ImportError:

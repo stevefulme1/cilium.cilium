@@ -77,13 +77,13 @@ resources:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client, config
+    from kubernetes import client, config  # noqa: F401
     from kubernetes.client.rest import ApiException
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False
 
-from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import (
+from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import (  # noqa: F401
     to_dict,
 )
 

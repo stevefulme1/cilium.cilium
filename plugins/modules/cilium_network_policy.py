@@ -113,7 +113,7 @@ resource:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client, config
+    import kubernetes  # noqa: F401
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False
@@ -121,7 +121,6 @@ except ImportError:
 from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import (
     CILIUM_COMMON_ARGS,
     build_metadata,
-    filter_none,
     to_dict,
 )
 from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_k8s import CiliumCrdHelper
