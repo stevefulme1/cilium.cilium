@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 class TestModuleUtil:
     def test_import(self):
         from ansible_collections.stevefulme1.cilium.plugins.module_utils import cilium_common
