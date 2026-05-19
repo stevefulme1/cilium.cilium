@@ -65,7 +65,7 @@ resources:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from kubernetes import client as _k8s_client
+    from kubernetes import client as _k8s_client  # noqa: F401
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False
