@@ -98,8 +98,6 @@ def main():
         defaults=dict(type="dict", required=True),
     )
     argument_spec.update(CILIUM_COMMON_ARGS)
-    # Override namespace default
-    argument_spec["namespace"]["default"] = "kube-system"
 
     module = AnsibleModule(
         argument_spec=argument_spec,
