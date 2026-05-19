@@ -11,7 +11,7 @@
   stevefulme1.cilium.cilium_status_info:
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
-    test_namespace: "{{ cilium_upgrade_namespace }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
   register: cilium_upgrade_current_status
 
 - name: Display current Cilium version
@@ -22,7 +22,7 @@
   stevefulme1.cilium.cilium_connectivity_test:
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
-    test_namespace: "{{ cilium_upgrade_namespace }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
   register: cilium_upgrade_preflight_result
   when: cilium_upgrade_pre_flight_check
 
@@ -39,7 +39,7 @@
     name: "{{ cilium_upgrade_helm_release_name }}"
     chart_ref: cilium/cilium
     chart_version: "{{ cilium_upgrade_target_version }}"
-    release_test_namespace: "{{ cilium_upgrade_namespace }}"
+    release_namespace: "{{ cilium_upgrade_namespace }}"
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
     wait: "{{ cilium_upgrade_wait }}"
@@ -52,7 +52,7 @@
     api_version: apps/v1
     kind: DaemonSet
     name: cilium
-    test_namespace: "{{ cilium_upgrade_namespace }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
   register: cilium_upgrade_ds
@@ -69,7 +69,7 @@
     api_version: apps/v1
     kind: DaemonSet
     name: cilium
-    test_namespace: "{{ cilium_upgrade_namespace }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
     spec:
@@ -84,7 +84,7 @@
   stevefulme1.cilium.cilium_connectivity_test:
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
-    test_namespace: "{{ cilium_upgrade_namespace }}"
+    namespace: "{{ cilium_upgrade_namespace }}"
   register: cilium_upgrade_posttest_result
   when: cilium_upgrade_post_upgrade_test
 
