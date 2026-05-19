@@ -26,7 +26,6 @@
         event.source.namespace != "" and
         event.destination.namespace != ""
       throttle:
-        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}"
         once_within: "300 seconds"
         group_by_attributes: []
       action:
@@ -46,7 +45,6 @@
         event.source.namespace != "" and
         event.destination.namespace != ""
       throttle:
-        group_by: "{{ event.source.namespace }}-to-{{ event.destination.namespace }}"
         once_within: "600"
         group_by_attributes: []
       action:

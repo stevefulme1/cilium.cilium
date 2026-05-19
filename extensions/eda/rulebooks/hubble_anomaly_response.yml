@@ -10,7 +10,6 @@
         event.event_type == "cilium_hubble_flow" and
         event.verdict == "DROPPED"
       throttle:
-        group_by: "{{ event.destination.namespace }}/{{ event.destination.pod_name }}"
         once_within: "120 seconds"
         group_by_attributes: []
       action:
@@ -31,7 +30,6 @@
         event.verdict == "DROPPED" and
         event.destination.port == 53
       throttle:
-        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-dns"
         once_within: "300 seconds"
         group_by_attributes: []
       action:
@@ -50,7 +48,6 @@
         event.verdict == "DROPPED" and
         event.destination.namespace == ""
       throttle:
-        group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-egress"
         once_within: "300 seconds"
         group_by_attributes: []
       action:
@@ -68,7 +65,6 @@
         event.event_type == "cilium_hubble_flow" and
         event.verdict == "ERROR"
       throttle:
-        group_by: "{{ event.node_name }}-error"
         once_within: "180"
         group_by_attributes: []
       action:
