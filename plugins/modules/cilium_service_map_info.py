@@ -83,7 +83,6 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     from kubernetes import client, config  # noqa: F401
     from kubernetes.client.rest import ApiException
-    from kubernetes.stream import portforward  # noqa: F401
     HAS_K8S_SDK = True
 except ImportError:
     HAS_K8S_SDK = False

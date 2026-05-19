@@ -83,8 +83,6 @@ try:
 except ImportError:
     HAS_K8S_SDK = False
 
-from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import (  # noqa: F401
-    to_dict,
 )
 
 

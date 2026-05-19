@@ -109,7 +109,7 @@ if os.path.isdir(os.path.join(_namespace_root, "ansible_collections")) and _name
 
 # Try importing; if it fails, build the namespace synthetically.
 try:
-    import ansible_collections.stevefulme1.cilium  # noqa: F401
+    import ansible_collections.stevefulme1.cilium  # pylint: disable=unused-import  # noqa: F401
 except (ImportError, ModuleNotFoundError):
     for _pkg_name in ("ansible_collections", "ansible_collections.stevefulme1"):
         if _pkg_name not in sys.modules:
