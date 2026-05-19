@@ -16,7 +16,7 @@
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exec"
         once_within: 120
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.alert_suspicious_process
@@ -39,7 +39,7 @@
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-fileaccess"
         once_within: 60
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.capture_forensics
@@ -62,7 +62,7 @@
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-privesc"
         once_within: 60
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.alert_suspicious_process
@@ -84,7 +84,7 @@
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-netsyscall"
         once_within: 120
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.capture_forensics
@@ -106,7 +106,7 @@
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exit"
         once_within: 60
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.log_process_exit

@@ -12,7 +12,7 @@
       throttle:
         group_by: "{{ event.destination.namespace }}/{{ event.destination.pod_name }}"
         once_within: 120
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.alert_traffic_anomaly
@@ -33,7 +33,7 @@
       throttle:
         group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-dns"
         once_within: 300
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.gather_flow_data
@@ -52,7 +52,7 @@
       throttle:
         group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-egress"
         once_within: 300
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.gather_flow_data
@@ -70,7 +70,7 @@
       throttle:
         group_by: "{{ event.node_name }}-error"
         once_within: 180
-          group_by_attributes: []
+        group_by_attributes: []
       action:
         run_playbook:
           name: stevefulme1.cilium.alert_traffic_anomaly
