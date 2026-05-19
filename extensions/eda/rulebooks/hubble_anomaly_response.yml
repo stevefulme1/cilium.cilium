@@ -11,7 +11,7 @@
         event.verdict == "DROPPED"
       throttle:
         group_by: "{{ event.destination.namespace }}/{{ event.destination.pod_name }}"
-        once_within: "120"
+        once_within: "120 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -32,7 +32,7 @@
         event.destination.port == 53
       throttle:
         group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-dns"
-        once_within: "300"
+        once_within: "300 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -51,7 +51,7 @@
         event.destination.namespace == ""
       throttle:
         group_by: "{{ event.source.namespace }}/{{ event.source.pod_name }}-egress"
-        once_within: "300"
+        once_within: "300 seconds"
         group_by_attributes: []
       action:
         run_playbook:

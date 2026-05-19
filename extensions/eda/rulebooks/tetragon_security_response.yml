@@ -15,7 +15,7 @@
         (event.process.binary | regex_search("(curl|wget|nc|ncat|nmap|tcpdump|ssh|python|perl|ruby)$"))
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exec"
-        once_within: "120"
+        once_within: "120 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -38,7 +38,7 @@
         event.policy_name is match("hardening-sensitive-files")
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-fileaccess"
-        once_within: "60"
+        once_within: "60 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -61,7 +61,7 @@
         event.function_name is match("sys_set(uid|gid)")
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-privesc"
-        once_within: "60"
+        once_within: "60 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -83,7 +83,7 @@
         event.policy_name is match("hardening-network-tools")
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-netsyscall"
-        once_within: "120"
+        once_within: "120 seconds"
         group_by_attributes: []
       action:
         run_playbook:
@@ -105,7 +105,7 @@
         event.status != 0
       throttle:
         group_by: "{{ event.process.pod.namespace }}/{{ event.process.pod.name }}-exit"
-        once_within: "60"
+        once_within: "60 seconds"
         group_by_attributes: []
       action:
         run_playbook:
