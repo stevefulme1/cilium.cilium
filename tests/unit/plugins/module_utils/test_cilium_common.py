@@ -3,42 +3,24 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 class TestModuleUtil:
     def test_import(self):
-        """Verify the module can be referenced."""
-        assert "cilium_common" != ""
+        from ansible_collections.stevefulme1.cilium.plugins.module_utils import cilium_common
+        assert hasattr(cilium_common, "CILIUM_COMMON_ARGS")
 
-    def test_client_factory(self):
-        client = MagicMock()
-        client.connect.return_value = True
-        assert client.connect() is True
+    def test_common_args_has_state(self):
+        from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import CILIUM_COMMON_ARGS
+        assert "state" in CILIUM_COMMON_ARGS
 
-    def test_client_configuration(self):
-        client = MagicMock()
-        client.configure.return_value = dict(kubeconfig="~/.kube/config", context="default")
-        config = client.configure()
-        assert config["kubeconfig"] == "~/.kube/config"
+    def test_to_dict(self):
+        from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import to_dict
+        result = to_dict({"metadata": {"name": "test"}})
+        assert result["metadata"]["name"] == "test"
 
-    def test_error_handling(self):
-        client = MagicMock()
-        client.get.side_effect = Exception("connection refused")
-        try:
-            client.get("resource", "test")
-            assert False, "Should have raised"
-        except Exception as exc:
-            assert "connection refused" in str(exc)
-
-    def test_wait_condition(self):
-        client = MagicMock()
-        client.wait.return_value = dict(status="ready", elapsed=5)
-        result = client.wait("resource", "test", timeout=30)
-        assert result["status"] == "ready"
-
-    def test_namespace_resolution(self):
-        client = MagicMock()
-        client.resolve_namespace.return_value = "kube-system"
-        ns = client.resolve_namespace("default")
-        assert ns == "kube-system"
+    def test_to_dict_none(self):
+        from ansible_collections.stevefulme1.cilium.plugins.module_utils.cilium_common import to_dict
+        result = to_dict(None)
+        assert result == {}
