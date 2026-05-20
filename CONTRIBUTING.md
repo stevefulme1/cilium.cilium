@@ -1,97 +1,27 @@
-# Contributing to stevefulme1.cilium
+# WELCOME TO ANSIBLE GITHUB
 
-Thank you for your interest in contributing to the Cilium Ansible
-collection. This document explains the process for contributing code,
-reporting issues, and running tests.
+Hi! Nice to see you here!
 
-## Getting Started
+## QUESTIONS ?
 
-### Prerequisites
+Please see the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for information on how to ask questions on the [mailing lists](https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information) and IRC.
 
-| Requirement | Version |
-|---|---|
-| Python | >= 3.12 |
-| ansible-core | >= 2.16 |
-| kubernetes SDK | >= 28.1.0 |
-| pytest | latest |
+The GitHub issue tracker is not the best place for questions for various reasons, but both IRC and the mailing list are very helpful places for those things, as the community page explains best.
 
-### Environment Setup
+## CONTRIBUTING ?
 
-1. Fork the repository and clone your fork:
+By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution.
 
-   ```bash
-   mkdir -p ansible_collections/stevefulme1
-   git clone https://github.com/<your-fork>/cilium.cilium.git \
-     ansible_collections/stevefulme1/cilium
-   cd ansible_collections/stevefulme1/cilium
-   ```
+You can read more about the [DCO and Contributor License Agreements](https://docs.ansible.com/ansible/latest/community/collection_contributors/collection_requirements.html#contributor-license-agreements) on the Ansible docsite.
 
-2. Create a Python virtual environment:
+Please review the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for more information on contributing to Ansible.
 
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install ansible-core>=2.16 kubernetes grpcio \
-     pytest pytest-cov yamllint flake8 ansible-lint
-   ```
+## BUG TO REPORT ?
 
-3. Configure Kubernetes credentials in `~/.kube/config` or via `KUBECONFIG`.
+First and foremost, also check the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html).
 
-## Running Tests
+You can report bugs or make enhancement requests at the [Ansible GitHub issue page](http://github.com/ansible/ansible/issues/new/choose) by filling out the issue template that will be presented.
 
-### Linting
+Also please make sure you are testing on the latest released version of Ansible or the development branch; see the [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) for details.
 
-```bash
-yamllint -c .yamllint .
-flake8 plugins/ --max-line-length=120 --ignore=E402,W503
-ansible-lint --strict
-```
-
-### Sanity Tests
-
-```bash
-ansible-test sanity --python 3.12 -v
-```
-
-### Unit Tests
-
-```bash
-pytest tests/unit/ -v --tb=short
-```
-
-### Integration Tests
-
-Requires a Kubernetes cluster with Cilium installed:
-
-```bash
-ansible-test integration --python 3.12 -v --allow-unsupported
-```
-
-## Pull Request Guidelines
-
-- Branch from `main` and target `main` for your PR.
-- Follow [conventional commit](https://www.conventionalcommits.org/) format
-  for PR titles: `feat:`, `fix:`, `docs:`, `test:`, `ci:`, `refactor:`.
-- Keep PRs focused on a single change.
-- Include unit tests for new modules.
-- Update `CHANGELOG.md` for user-facing changes.
-- Ensure all CI checks pass before requesting review.
-
-## Module Development
-
-### Creating a New Module
-
-1. Create the module file in `plugins/modules/`.
-2. Include full `DOCUMENTATION`, `EXAMPLES`, and `RETURN` blocks.
-3. Use `extends_documentation_fragment: stevefulme1.cilium.cilium_common`.
-4. Use `CiliumCrdHelper` from `module_utils` for CRD management.
-5. Support `check_mode`.
-6. Write unit tests in `tests/unit/plugins/modules/`.
-7. Create an integration test target in `tests/integration/targets/`.
-
-### Code Style
-
-- Maximum line length: 120 characters.
-- Follow PEP 8 with exceptions defined in `ruff.toml`.
-- Use `from __future__ import absolute_import, division, print_function`.
-- No shebangs in module files.
+Thanks!
