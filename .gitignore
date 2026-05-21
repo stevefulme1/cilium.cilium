@@ -12,6 +12,7 @@ credentials*
 # Ansible
 *.retry
 collections/
+.ansible/
 
 # Python
 __pycache__/

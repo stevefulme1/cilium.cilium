@@ -45,8 +45,7 @@
     kubeconfig: "{{ cilium_observability_kubeconfig | default(omit) }}"
     context: "{{ cilium_observability_context | default(omit) }}"
     namespace: "{{ cilium_observability_namespace }}"
-    metrics: "{{ cilium_observability_hubble_metrics }}"
-    state: present
+    hubble_metrics: "{{ cilium_observability_hubble_metrics }}"
   when: cilium_observability_prometheus_enabled
 
 - name: Deploy Grafana dashboard ConfigMap for Cilium

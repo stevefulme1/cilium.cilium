@@ -22,7 +22,7 @@
   stevefulme1.cilium.cilium_connectivity_test:
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
-    namespace: "{{ cilium_upgrade_namespace }}"
+    cilium_namespace: "{{ cilium_upgrade_namespace }}"
   register: cilium_upgrade_preflight_result
   when: cilium_upgrade_pre_flight_check
 
@@ -84,7 +84,7 @@
   stevefulme1.cilium.cilium_connectivity_test:
     kubeconfig: "{{ cilium_upgrade_kubeconfig | default(omit) }}"
     context: "{{ cilium_upgrade_context | default(omit) }}"
-    namespace: "{{ cilium_upgrade_namespace }}"
+    cilium_namespace: "{{ cilium_upgrade_namespace }}"
   register: cilium_upgrade_posttest_result
   when: cilium_upgrade_post_upgrade_test
 

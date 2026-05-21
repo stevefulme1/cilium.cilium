@@ -52,8 +52,9 @@
     kubeconfig: "{{ cilium_cluster_mesh_kubeconfig | default(omit) }}"
     context: "{{ cilium_cluster_mesh_context | default(omit) }}"
     namespace: "{{ cilium_cluster_mesh_namespace }}"
-    remote_context: "{{ item }}"
-    state: present
+    enabled: true
+    remote_clusters:
+      - context: "{{ item }}"
   loop: "{{ cilium_cluster_mesh_remote_contexts }}"
   when:
     - cilium_cluster_mesh_state == 'present'

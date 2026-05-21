@@ -17,14 +17,13 @@
   tasks:
     - name: Configure Prometheus metrics
       stevefulme1.cilium.cilium_metrics_config:
-        metrics:
+        hubble_metrics:
           - dns:query;ignoreAAAA
           - drop
           - tcp
           - flow
           - icmp
           - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,destination_ip
-        state: present
 
     - name: Verify Hubble is running
       stevefulme1.cilium.cilium_hubble_info: {}
