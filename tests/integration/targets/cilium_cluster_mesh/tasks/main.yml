@@ -1,0 +1,26 @@
+---
+# Integration tests for stevefulme1.cilium.cilium_cluster_mesh
+
+- name: Query cilium_cluster_mesh info
+  stevefulme1.cilium.cilium_cluster_mesh_info:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+  register: info_result
+
+- name: Verify cilium_cluster_mesh info
+  ansible.builtin.assert:
+    that:
+      - info_result is not failed
+
+- name: Run cilium_cluster_mesh (check_mode)
+  stevefulme1.cilium.cilium_cluster_mesh:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+  check_mode: true
+  register: check_result
+
+- name: Verify check_mode result
+  ansible.builtin.assert:
+    that:
+      - check_result is not failed

@@ -5,6 +5,8 @@
     kind: Namespace
     name: "{{ test_namespace }}"
     state: present
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
     kubeconfig: "{{ test_kubeconfig }}"
 
 # --- CREATE ---
@@ -14,6 +16,8 @@
     name: "{{ test_policy_name }}"
     namespace: "{{ test_namespace }}"
     state: present
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
     definition:
       apiVersion: cilium.io/v2
       kind: CiliumNetworkPolicy
@@ -48,6 +52,8 @@
     name: "{{ test_policy_name }}"
     namespace: "{{ test_namespace }}"
     state: present
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
     definition:
       apiVersion: cilium.io/v2
       kind: CiliumNetworkPolicy
@@ -96,6 +102,8 @@
     name: "{{ test_policy_name }}"
     namespace: "{{ test_namespace }}"
     state: present
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
     definition:
       apiVersion: cilium.io/v2
       kind: CiliumNetworkPolicy
@@ -131,6 +139,8 @@
     name: "{{ test_policy_name }}"
     namespace: "{{ test_namespace }}"
     state: absent
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
   register: delete_result
 
 - name: Verify deletion
@@ -146,6 +156,8 @@
     name: "{{ test_policy_name }}"
     namespace: "{{ test_namespace }}"
     state: absent
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
   register: delete_again_result
 
 - name: Verify delete idempotency
@@ -161,4 +173,6 @@
     kind: Namespace
     name: "{{ test_namespace }}"
     state: absent
+    argument_spec: "ansible-test-argument_spec"
+    description: "ansible-test-description"
     kubeconfig: "{{ test_kubeconfig }}"

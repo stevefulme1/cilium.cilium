@@ -1,0 +1,13 @@
+---
+# Integration tests for stevefulme1.cilium.cilium_identity_info
+
+- name: Query cilium_identity_info
+  stevefulme1.cilium.cilium_identity_info:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+  register: result
+
+- name: Verify cilium_identity_info returns data
+  ansible.builtin.assert:
+    that:
+      - result is not failed

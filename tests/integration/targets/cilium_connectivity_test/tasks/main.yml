@@ -1,0 +1,15 @@
+---
+# Integration tests for stevefulme1.cilium.cilium_connectivity_test
+
+- name: Run cilium_connectivity_test (check_mode)
+  stevefulme1.cilium.cilium_connectivity_test:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+  check_mode: true
+  register: check_result
+
+- name: Verify check_mode result
+  ansible.builtin.assert:
+    that:
+      - check_result is not failed

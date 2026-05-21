@@ -1,0 +1,8 @@
+---
+# Integration test configuration for stevefulme1.cilium
+test_kubeconfig: "~/.kube/config"
+test_namespace: "kube-system"
+test_chart_version: "1.17.0"
+test_helm_release: "cilium"
+test_wait_timeout: "300s"
+resource_prefix: "ansible-ci-cilium"

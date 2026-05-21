@@ -1,0 +1,100 @@
+---
+# Integration tests for stevefulme1.cilium.cilium_egress_gateway_policy
+
+- name: Create cilium_egress_gateway_policy (check_mode)
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: present
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  check_mode: true
+  register: check_result
+
+- name: Verify check_mode reports changed
+  ansible.builtin.assert:
+    that:
+      - check_result is changed
+
+- name: Create cilium_egress_gateway_policy
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: present
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  register: create_result
+
+- name: Verify cilium_egress_gateway_policy was created
+  ansible.builtin.assert:
+    that:
+      - create_result is changed
+
+- name: Create cilium_egress_gateway_policy again (idempotency)
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: present
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  register: idem_result
+
+- name: Verify idempotent create
+  ansible.builtin.assert:
+    that:
+      - idem_result is not changed
+
+- name: Delete cilium_egress_gateway_policy (check_mode)
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: absent
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  check_mode: true
+  register: delete_check
+
+- name: Verify check_mode delete reports changed
+  ansible.builtin.assert:
+    that:
+      - delete_check is changed
+
+- name: Delete cilium_egress_gateway_policy
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: absent
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  register: delete_result
+
+- name: Verify cilium_egress_gateway_policy was deleted
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+
+- name: Delete cilium_egress_gateway_policy again (idempotent)
+  stevefulme1.cilium.cilium_egress_gateway_policy:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    state: absent
+    argument_spec: "ansible-test-argument_spec"
+    egress_gateway: {}
+    description: "ansible-test-description"
+  register: delete_idem
+
+- name: Verify idempotent delete
+  ansible.builtin.assert:
+    that:
+      - delete_idem is not changed

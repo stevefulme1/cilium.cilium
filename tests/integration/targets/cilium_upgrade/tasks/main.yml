@@ -1,0 +1,16 @@
+---
+# Integration tests for stevefulme1.cilium.cilium_upgrade
+
+- name: Run cilium_upgrade (check_mode)
+  stevefulme1.cilium.cilium_upgrade:
+    kubeconfig: "{{ test_kubeconfig }}"
+    namespace: "{{ test_namespace | default('kube-system') }}"
+    name: "ansible-test-{{ resource_prefix }}"
+    target_version: "ansible-test-target_version"
+  check_mode: true
+  register: check_result
+
+- name: Verify check_mode result
+  ansible.builtin.assert:
+    that:
+      - check_result is not failed
