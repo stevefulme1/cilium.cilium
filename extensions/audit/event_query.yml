@@ -1,0 +1,78 @@
+---
+stevefulme1.cilium.*:
+  query: >-
+    (
+      {
+        "resourcetype": "Category",
+        "Network Policy": "Security",
+        "Clusterwide Network Policy": "Security",
+        "Endpoint": "Networking",
+        "Service": "Networking",
+        "BGP Peering Policy": "Networking",
+        "CIDR Group": "Networking",
+        "Egress Gateway Policy": "Networking",
+        "Envoy Config": "App Integration & Messaging",
+        "Clusterwide Envoy Config": "App Integration & Messaging",
+        "Local Redirect Policy": "Networking",
+        "LB IP Pool": "Networking",
+        "Cluster Mesh": "Networking",
+        "Tracing Policy": "Governance & Operations",
+        "Namespaced Tracing Policy": "Governance & Operations",
+        "Identity": "Security",
+        "Node Config": "Governance & Operations",
+        "Hubble": "Governance & Operations",
+        "Metrics Config": "Governance & Operations"
+      } as $mapping |
+      (.resource // .resources // .) |
+      (if type=="array" then .[] else if type=="object" then . else empty end end) as $data |
+      select($data.metadata != null or $data.id != null or $data.name != null) |
+      (
+        if $data.kind == "CiliumNetworkPolicy" then "Network Policy"
+        elif $data.kind == "CiliumClusterwideNetworkPolicy" then "Clusterwide Network Policy"
+        elif $data.kind == "CiliumEndpoint" or ($data.metadata != null and $data.status != null and $data.status.identity != null) then "Endpoint"
+        elif $data.kind == "Service" or ($data.metadata != null and $data.spec != null and $data.spec.ports != null) then "Service"
+        elif $data.kind == "CiliumBGPPeeringPolicy" then "BGP Peering Policy"
+        elif $data.kind == "CiliumCIDRGroup" then "CIDR Group"
+        elif $data.kind == "CiliumEgressGatewayPolicy" then "Egress Gateway Policy"
+        elif $data.kind == "CiliumEnvoyConfig" then "Envoy Config"
+        elif $data.kind == "CiliumClusterwideEnvoyConfig" then "Clusterwide Envoy Config"
+        elif $data.kind == "CiliumLocalRedirectPolicy" then "Local Redirect Policy"
+        elif $data.kind == "CiliumLoadBalancerIPPool" then "LB IP Pool"
+        elif $data.kind == "CiliumClusterMesh" then "Cluster Mesh"
+        elif $data.kind == "TracingPolicy" then "Tracing Policy"
+        elif $data.kind == "TracingPolicyNamespaced" then "Namespaced Tracing Policy"
+        elif $data.identity != null or $data.id != null then "Identity"
+        elif $data.node_name != null then "Node Config"
+        elif $data.hubble != null then "Hubble"
+        elif $data.metrics != null then "Metrics Config"
+        else "Network Policy"
+        end
+      ) as $node_type |
+      (
+        if $data.metadata != null and $data.metadata.namespace != null then $data.metadata.namespace
+        elif $data.namespace != null then $data.namespace
+        elif $data.cluster_name != null then $data.cluster_name
+        else "default"
+        end
+      ) as $sub_node_type |
+      {
+        name: (
+          if $data.metadata != null then
+            (if $data.metadata.namespace != null then ($data.metadata.namespace + "/" + $data.metadata.name) else $data.metadata.name end)
+          elif $data.name != null then $data.name
+          elif $data.id != null then $data.id
+          else "UNKNOWN"
+          end
+        ),
+        canonical_facts: {
+          name: ($data.metadata.name // $data.name // "UNKNOWN"),
+          id: ($data.metadata.uid // $data.id // $data.identity),
+          node_type: $node_type
+        },
+        facts: {
+          infra_type: "Kubernetes",
+          infra_bucket: ($mapping[$node_type] // "UNKNOWN"),
+          device_type: $sub_node_type
+        }
+      }
+    )

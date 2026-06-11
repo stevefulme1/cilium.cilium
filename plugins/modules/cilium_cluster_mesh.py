@@ -93,7 +93,7 @@ release:
   description: Helm release information after update.
   type: dict
   returned: always
-values:
+helm_values:
   description: Cluster Mesh Helm values applied.
   type: dict
   returned: always
@@ -162,18 +162,18 @@ def main():
 
     current_values = helper.get_release_values(release_name, namespace)
     if not helper.values_changed(current_values, desired_values):
-        module.exit_json(changed=False, release=existing, values=desired_values)
+        module.exit_json(changed=False, release=existing, helm_values=desired_values)
 
     if module.check_mode:
-        module.exit_json(changed=True, release=existing, values=desired_values)
+        module.exit_json(changed=True, release=existing, helm_values=desired_values)
 
     helper.upgrade(
         release_name, "cilium/cilium", namespace,
-        values=desired_values,
+        helm_values=desired_values,
     )
 
     release = helper.get_release(release_name, namespace) or {}
-    module.exit_json(changed=True, release=release, values=desired_values)
+    module.exit_json(changed=True, release=release, helm_values=desired_values)
 
 
 if __name__ == "__main__":

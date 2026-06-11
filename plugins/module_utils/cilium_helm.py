@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import json
-import subprocess
 
 
 class CiliumHelmHelper:
@@ -25,26 +24,24 @@ class CiliumHelmHelper:
 
     def _run(self, args, check=True):
         cmd = self._base_cmd() + args
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=600,
-                check=False,
+        rc, stdout, stderr = self.module.run_command(cmd, environ_update={'PATH': '/usr/local/bin:/usr/bin:/bin'})
+
+        if check and rc != 0:
+            self.module.fail_json(
+                msg="Helm command failed: {0}".format(stderr.strip()),
+                cmd=" ".join(cmd),
+                rc=rc,
+                stderr=stderr,
             )
-            if check and result.returncode != 0:
-                self.module.fail_json(
-                    msg="Helm command failed: {0}".format(result.stderr.strip()),
-                    cmd=" ".join(cmd),
-                    rc=result.returncode,
-                    stderr=result.stderr,
-                )
-            return result
-        except FileNotFoundError:
-            self.module.fail_json(msg="helm binary not found in PATH")
-        except subprocess.TimeoutExpired:
-            self.module.fail_json(msg="Helm command timed out after 600 seconds")
+
+        # Return object with attributes matching subprocess.CompletedProcess
+        class Result:
+            def __init__(self, returncode, stdout, stderr):
+                self.returncode = returncode
+                self.stdout = stdout
+                self.stderr = stderr
+
+        return Result(rc, stdout, stderr)
 
     def add_repo(self, name, url):
         self._run(["repo", "add", name, url, "--force-update"])
