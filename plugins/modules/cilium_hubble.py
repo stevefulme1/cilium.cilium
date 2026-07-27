@@ -66,13 +66,13 @@ options:
 
 EXAMPLES = r"""
 - name: Enable Hubble with Relay and UI
-  stevefulme1.cilium.cilium_hubble:
+  cilium_hubble:
     enabled: true
     relay_enabled: true
     ui_enabled: true
 
 - name: Enable Hubble with custom metrics
-  stevefulme1.cilium.cilium_hubble:
+  cilium_hubble:
     enabled: true
     metrics:
       - dns
@@ -83,7 +83,7 @@ EXAMPLES = r"""
       - "httpV2:exemplars=true;labelsContext=source_ip,source_namespace"
 
 - name: Disable Hubble
-  stevefulme1.cilium.cilium_hubble:
+  cilium_hubble:
     enabled: false
 """
 
