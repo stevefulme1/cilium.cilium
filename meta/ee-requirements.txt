@@ -1,2 +1,2 @@
-kubernetes>=28.1.0
+kubernetes>=37.0.0
 grpcio>=1.83.0
